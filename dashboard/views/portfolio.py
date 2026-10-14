@@ -15,6 +15,12 @@ COLOURS = {BENCHMARK: "#9aa0a6", "Custom": BLUE, "Max Sharpe": ACCENT,
            "Min volatility": "#7bc67b", "Inverse volatility": "#b48ead"}
 
 
+@st.cache_data(show_spinner=False, ttl=3600)
+def cached_simulation(returns, risk_free):
+    """20,000 random long-only portfolios, kept in memory between reruns."""
+    return analytics.simulate_portfolios(returns, risk_free=risk_free)
+
+
 def portfolio_page():
     st.title(":material/pie_chart: Portfolio")
     st.write("**Long-only, all-weather portfolio** benchmarked against 40% World Equities · "
@@ -60,7 +66,7 @@ def portfolio_page():
     if custom_raw.sum() == 0:
         st.error("The custom weights must not all be zero.")
         return
-    simulation = analytics.simulate_portfolios(returns[selected], risk_free=risk_free)
+    simulation = cached_simulation(returns[selected], risk_free)
     portfolios = {
         "Custom": custom_raw / custom_raw.sum(),
         "Max Sharpe": analytics.pick_portfolio(simulation, "max_sharpe", selected),

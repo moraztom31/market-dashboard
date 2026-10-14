@@ -10,6 +10,15 @@ from dashboard.data import download_close_prices
 from dashboard.views.common import sidebar_controls
 
 
+@st.cache_data(show_spinner=False, ttl=3600)
+def cached_garch_fit(returns, horizon):
+    """GARCH fit kept in memory: moving a slider does not refit the model.
+
+    Exceptions (too little data, failed fit) are not cached by Streamlit.
+    """
+    return volatility.fit_garch(returns, horizon)
+
+
 def volatility_page():
     st.title(":material/monitoring: Volatility forecast")
     st.write("Volatility measures how much a price swings. It is not constant: calm and "
@@ -53,7 +62,7 @@ def volatility_page():
     ewma = volatility.ewma_volatility(returns, decay)
     with st.spinner("Fitting the GARCH(1,1) model..."):
         try:
-            garch = volatility.fit_garch(returns, horizon)
+            garch = cached_garch_fit(returns, horizon)
         except Exception as error:
             st.error(f"The GARCH model could not be fitted: {error}")
             return
