@@ -17,7 +17,7 @@ def clear_cache():
 @pytest.fixture
 def fake_yfinance(monkeypatch):
     def fake_download(tickers, start, end, **kwargs):
-        tickers = list(tickers)
+        tickers = [tickers] if isinstance(tickers, str) else list(tickers)
         index = pd.bdate_range(start, end - pd.Timedelta(days=1))
         rng = np.random.default_rng(0)
         values = 100 + np.cumsum(rng.normal(size=(len(index), len(tickers))), axis=0)

@@ -1,6 +1,7 @@
 """Data access: Yahoo Finance (yfinance) and FRED, with Streamlit caching."""
 
 import io
+import time
 from datetime import timedelta
 
 import pandas as pd
@@ -11,28 +12,69 @@ import yfinance as yf
 from dashboard.config import FX_CURRENCIES, FX_SYMBOLS
 
 
-@st.cache_data(show_spinner=False, ttl=3600)
-def download_close_prices(tickers, start, end):
-    """Download daily closing prices (cached: identical requests are not repeated)."""
-    data = yf.download(
-        list(tickers),
-        start=start,
-        end=end + timedelta(days=1),  # yfinance treats `end` as exclusive
-        interval="1d",
-        auto_adjust=False,
-        progress=False,
-    )
-    if data.empty:
-        return pd.DataFrame()
+class NoDataError(Exception):
+    """Yahoo Finance returned no data for a symbol."""
 
-    # Depending on the yfinance version, one ticker may come back as a
-    # Series or as a one-column DataFrame: normalise to a DataFrame.
-    close = data["Close"].copy()
-    if isinstance(close, pd.Series):
-        close = close.to_frame(name=tickers[0])
-    elif len(tickers) == 1:
-        close.columns = [tickers[0]]
-    return close.dropna(how="all")
+
+RETRIES = 3
+RETRY_DELAY = 1.0  # seconds, multiplied by the attempt number
+
+
+@st.cache_data(show_spinner=False, ttl=3600)
+def _download_one(symbol, start, end):
+    """Download the daily closes of ONE symbol, retrying on empty answers or errors.
+
+    Exceptions are never cached by Streamlit: a failure (rate limiting, empty answer)
+    is therefore retried on the next run instead of being remembered for an hour.
+    """
+    last_error = None
+    for attempt in range(RETRIES):
+        try:
+            data = yf.download(
+                symbol,
+                start=start,
+                end=end + timedelta(days=1),  # yfinance treats `end` as exclusive
+                interval="1d",
+                auto_adjust=False,
+                progress=False,
+            )
+            if not data.empty:
+                close = data["Close"]
+                if isinstance(close, pd.DataFrame):  # one-column frame in recent yfinance
+                    close = close.iloc[:, 0]
+                close = close.dropna()
+                if not close.empty:
+                    return close.rename(symbol)
+        except Exception as error:  # network error, Yahoo rate limit, ...
+            last_error = error
+        if attempt < RETRIES - 1:
+            time.sleep(RETRY_DELAY * (attempt + 1))
+    if last_error is not None:
+        raise last_error
+    raise NoDataError(symbol)
+
+
+def download_close_prices(tickers, start, end):
+    """Daily closing prices, one column per ticker that returned data.
+
+    Tickers are downloaded one by one (cached individually), so a temporary Yahoo
+    failure on one ticker does not hide the others. If nothing could be loaded and
+    a download error occurred, that error is raised; if Yahoo simply returned no
+    data, an empty DataFrame is returned.
+    """
+    series, errors = [], []
+    for symbol in tickers:
+        try:
+            series.append(_download_one(symbol, start, end))
+        except NoDataError:
+            continue
+        except Exception as error:
+            errors.append(error)
+    if not series:
+        if errors:
+            raise errors[-1]
+        return pd.DataFrame()
+    return pd.concat(series, axis=1).sort_index()
 
 
 @st.cache_data(show_spinner=False, ttl=3600)

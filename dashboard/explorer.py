@@ -95,7 +95,8 @@ def explorer(prefix, options, default, price_name, labels=None):
     missing = [s for s in params["selected"]
                if s not in close_prices.columns or close_prices[s].dropna().empty]
     if missing:
-        st.warning(f"No data returned for: {', '.join(name(s) for s in missing)}.")
+        st.warning(f"No data returned for: {', '.join(name(s) for s in missing)}. "
+                   "Yahoo Finance may be temporarily unavailable: reload in a moment.")
     close_prices = close_prices.drop(columns=missing, errors="ignore")
     if close_prices.empty:
         st.warning("No closing prices were returned.")

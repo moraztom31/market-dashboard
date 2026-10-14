@@ -53,8 +53,8 @@ def overview(symbols, labels, start, end):
     missing = [s for s in symbols if s not in prices.columns or prices[s].dropna().empty]
     prices = prices.drop(columns=missing, errors="ignore")
     if missing:
-        st.warning("No data returned for: "
-                   + ", ".join(labels.get(s, s) for s in missing) + ".")
+        st.warning("No data returned for: " + ", ".join(labels.get(s, s) for s in missing)
+                   + ". Yahoo Finance may be temporarily unavailable: reload in a moment.")
     if prices.empty:
         st.warning("No quotations were returned. Check the selection and date range.")
         return
