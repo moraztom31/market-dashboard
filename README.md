@@ -27,7 +27,10 @@ Data comes from **Yahoo Finance** (`yfinance`) and **FRED**.
 | **Currencies** | Clickable spot cross-rate matrix for 8 currencies and the history of the selected pair |
 | **Portfolio** | Long-only all-weather portfolio: 40% World equities / 30% Government bonds / 30% Commodities benchmark vs custom, max-Sharpe, min-volatility and inverse-volatility allocations, with risk-return scatter, allocations and correlations |
 | **Backtest** | Long-only moving-average crossover vs buy & hold, with transaction costs, equity curves and risk metrics |
+| **Volatility** | Realised, EWMA (RiskMetrics) and GARCH(1,1) volatility, with a forecast of the next trading days, long-run level and model parameters |
 | **Explorer tab** (Stocks, Commodities, Bonds) | Form to pick instruments and dates, normalise to base 100, add short/long moving averages, then get annualised return, volatility, Sharpe ratio, max drawdown, correlation heatmap and drawdown chart |
+
+Every line chart has a **vertical scale** control (plus mouse-wheel zoom and drag) to stretch the y-axis and see small moves.
 
 ## Run locally
 

@@ -1,6 +1,9 @@
 """Altair charts and styled tables."""
 
+import hashlib
+
 import altair as alt
+import numpy as np
 import pandas as pd
 import streamlit as st
 
@@ -34,23 +37,52 @@ def return_bars(table, columns):
             slot.altair_chart(chart, width="stretch")
 
 
-def multi_line_chart(table, y_title, step=False, colors=None):
+def y_range_control(values, seed):
+    """Slider (in an expander) to stretch or squeeze the vertical axis of a chart.
+
+    Returns (low, high) or None when the data has no usable range. The widget key
+    depends on the data bounds, so the slider resets when the data changes.
+    """
+    finite = np.asarray(values, dtype=float)
+    finite = finite[np.isfinite(finite)]
+    if finite.size < 2 or finite.max() == finite.min():
+        return None
+    low, high = float(finite.min()), float(finite.max())
+    span = high - low
+    key = "yr_" + hashlib.md5(f"{seed}|{low:.6g}|{high:.6g}".encode()).hexdigest()[:12]
+    with st.expander("Vertical scale"):
+        return st.slider("Y-axis range", low - span, high + span,
+                         (low - 0.05 * span, high + 0.05 * span), step=span / 400, key=key,
+                         help="Narrow the range to zoom in on small moves, widen it to zoom out. "
+                              "You can also zoom with the mouse wheel and drag on the chart.")
+
+
+def multi_line_chart(table, y_title, step=False, colors=None, x_title="Date", temporal=True,
+                     y_control=True):
     """Interactive multi-line chart (y-axis fitted to the data, zoom and tooltip).
 
-    colors: optional dict series name -> colour.
+    colors: optional dict series name -> colour. temporal=False draws a numeric x axis
+    (index named x_title) instead of dates. y_control adds a vertical-scale slider.
     """
     colour_scale = (alt.Scale(domain=list(colors), range=list(colors.values()))
                     if colors else alt.Undefined)
+    y_scale = alt.Scale(zero=False, nice=True)
+    y_range = None
     long = (table.rename_axis("Date").reset_index()
             .melt("Date", var_name="Series", value_name="Value").dropna())
+    x_type = "T" if temporal else "Q"
+    if y_control:
+        y_range = y_range_control(long["Value"], f"{y_title}|{list(table.columns)}")
+        if y_range is not None:
+            y_scale = alt.Scale(domain=list(y_range), zero=False, nice=False)
     chart = (
         alt.Chart(long)
-        .mark_line(interpolate="step-after" if step else "linear")
+        .mark_line(interpolate="step-after" if step else "linear", clip=True)
         .encode(
-            x=alt.X("Date:T", title="Date"),
-            y=alt.Y("Value:Q", title=y_title, scale=alt.Scale(zero=False, nice=True)),
+            x=alt.X(f"Date:{x_type}", title=x_title),
+            y=alt.Y("Value:Q", title=y_title, scale=y_scale),
             color=alt.Color("Series:N", scale=colour_scale, legend=alt.Legend(title=None)),
-            tooltip=["Date:T", "Series:N", alt.Tooltip("Value:Q", format=".3f")],
+            tooltip=[f"Date:{x_type}", "Series:N", alt.Tooltip("Value:Q", format=".3f")],
         )
         .interactive()
     )

@@ -82,3 +82,6 @@ HOME_ASSETS = {
 }
 HOME_YIELD_SYMBOLS = {"^TNX"}
 HOME_DEFAULT_CHART = ["^GSPC", "GC=F", "CL=F", "EURUSD=X"]
+
+# Volatility page: instruments
+VOL_SYMBOLS = {**BACKTEST_SYMBOLS, "BTC-USD": "Bitcoin", "EURUSD=X": "EUR/USD"}

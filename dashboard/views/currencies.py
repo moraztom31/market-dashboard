@@ -3,6 +3,7 @@
 import altair as alt
 import streamlit as st
 
+from dashboard.charts import y_range_control
 from dashboard.config import ACCENT, FX_CURRENCIES
 from dashboard.data import usd_value_table
 from dashboard.views.common import sidebar_controls
@@ -72,14 +73,16 @@ def currencies_page():
         st.info("Numerator and denominator are identical: the rate is always 1.")
         return
     pair = (usd_values[base] / usd_values[quote]).dropna()
+    y_range = y_range_control(pair, f"fx|{base}|{quote}")
+    y_scale = (alt.Scale(domain=list(y_range), zero=False, nice=False) if y_range
+               else alt.Scale(zero=False, nice=True))
     pair_df = pair.rename("rate").rename_axis("Date").reset_index()
     pair_chart = (
         alt.Chart(pair_df)
-        .mark_line(color=ACCENT)
+        .mark_line(color=ACCENT, clip=True)
         .encode(
             x=alt.X("Date:T", title="Date"),
-            y=alt.Y("rate:Q", title=f"{quote} per 1 {base}",
-                    scale=alt.Scale(zero=False, nice=True)),
+            y=alt.Y("rate:Q", title=f"{quote} per 1 {base}", scale=y_scale),
             tooltip=[alt.Tooltip("Date:T"), alt.Tooltip("rate:Q", format=".4f")],
         )
         .interactive()  # zoom and pan with the mouse

@@ -11,6 +11,7 @@ from dashboard.views.bonds import bonds_page
 from dashboard.views.currencies import currencies_page
 from dashboard.views.home import home_page
 from dashboard.views.portfolio import portfolio_page
+from dashboard.views.volatility import volatility_page
 
 st.set_page_config(page_title="Cross-Asset Market Monitor", page_icon="📊", layout="wide")
 
@@ -22,5 +23,6 @@ navigation = st.navigation([
     st.Page(currencies_page, title="Currencies", icon=":material/euro_symbol:", url_path="currencies"),
     st.Page(portfolio_page, title="Portfolio", icon=":material/pie_chart:", url_path="portfolio"),
     st.Page(backtest_page, title="Backtest", icon=":material/science:", url_path="backtest"),
+    st.Page(volatility_page, title="Volatility", icon=":material/monitoring:", url_path="volatility"),
 ])
 navigation.run()

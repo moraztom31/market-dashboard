@@ -11,6 +11,7 @@ PAGES = [
     ("dashboard.views.currencies", "currencies_page"),
     ("dashboard.views.backtest", "backtest_page"),
     ("dashboard.views.portfolio", "portfolio_page"),
+    ("dashboard.views.volatility", "volatility_page"),
 ]
 
 
@@ -40,3 +41,13 @@ def test_explorer_rejects_empty_selection(fake_yfinance, fake_fred):
          ).set_value([])
     next(b for b in at.button if "Load" in b.label).click().run()
     assert any("at least one" in e.value for e in at.error)
+
+
+def test_vertical_scale_slider_changes_the_chart_range(fake_yfinance, fake_fred):
+    at = AppTest.from_string(
+        "from dashboard.views.assets import stocks_page\nstocks_page()",
+        default_timeout=120).run()
+    slider = next(s for s in at.slider if s.label == "Y-axis range")
+    low, high = slider.value
+    slider.set_value((low + (high - low) * 0.25, high - (high - low) * 0.25)).run()
+    assert not at.exception
