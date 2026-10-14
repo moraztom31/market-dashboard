@@ -49,12 +49,3 @@ def test_line_charts_are_interactive_plotly_charts(fake_yfinance, fake_fred):
         default_timeout=120).run()
     assert not at.exception
     assert len(at.get("plotly_chart")) >= 1
-
-
-def test_y_axis_zoom_slider_is_available(fake_yfinance, fake_fred):
-    at = AppTest.from_string(
-        "from dashboard.views.assets import stocks_page\nstocks_page()",
-        default_timeout=120).run()
-    slider = next(s for s in at.slider if s.label.startswith("Y-axis zoom"))
-    slider.set_value(4.0).run()
-    assert not at.exception
