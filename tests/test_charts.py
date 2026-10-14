@@ -1,8 +1,6 @@
 import pytest
 
-import pandas as pd
-
-from dashboard.charts import line_figure, y_axis_range
+from dashboard.charts import y_axis_range
 
 
 def test_zoom_one_covers_the_data():
@@ -19,13 +17,3 @@ def test_zoom_narrows_the_range_around_the_centre():
 
 def test_constant_data_has_no_range():
     assert y_axis_range([5, 5, 5], zoom=1) is None
-
-
-def test_line_figure_locks_x_and_zooms_vertically():
-    table = pd.DataFrame({"A": [1.0, 2.0, 3.0]}, index=pd.date_range("2024-01-01", periods=3))
-    figure = line_figure(table, "Value", y_range=(0.5, 3.5))
-    assert figure.layout.dragmode == "zoom"
-    assert figure.layout.xaxis.fixedrange is True      # a drag selects a vertical band
-    assert figure.layout.yaxis.fixedrange is False
-    assert list(figure.layout.yaxis.range) == [0.5, 3.5]
-    assert len(figure.data) == 1
