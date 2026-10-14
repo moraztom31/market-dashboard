@@ -11,6 +11,12 @@ Data comes from **Yahoo Finance** (`yfinance`) and **FRED**.
 
 ## Screenshots
 
+![Overview](docs/screenshots/overview.webp)
+
+| Stocks: returns | Portfolio: all-weather benchmark vs optimised |
+|---|---|
+| ![Stocks](docs/screenshots/stocks.webp) | ![Portfolio](docs/screenshots/portfolio.webp) |
+
 | Currencies: clickable spot matrix | Bonds: Treasury curve and OECD yields |
 |---|---|
 | ![Currencies](docs/screenshots/currencies.webp) | ![Bonds](docs/screenshots/bonds.webp) |
