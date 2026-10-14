@@ -91,12 +91,13 @@ def portfolio_page():
     st.dataframe(shown.style.format("{:.0%}"), width="stretch")
 
     st.subheader("Long-only portfolios: risk vs return")
-    marks = pd.DataFrame(
-        [{"Portfolio": k, **{c: analytics.portfolio_stats(returns, weights[k], risk_free)[c]
-                             for c in ("Volatility", "Return")}} for k in weights.columns])
+    stats = {k: analytics.portfolio_stats(returns, weights[k], risk_free) for k in weights.columns}
+    marks = pd.DataFrame([
+        {"Label": f"{k} (Sharpe {v['Sharpe ratio']:.2f})", "Volatility": v["Volatility"],
+         "Return": v["Return"]} for k, v in stats.items()])
     frontier_chart(simulation, marks)
     st.caption("Each dot is a random long-only allocation of the selected assets "
-               "(colour = Sharpe ratio). White markers are the portfolios above.")
+               "(colour = Sharpe ratio: red/orange = high, blue = low). White markers are the portfolios above, labelled with their Sharpe ratio.")
 
     st.subheader("Correlation of daily returns")
     correlation_heatmap(analytics.correlation_matrix(prices[available]).rename(
