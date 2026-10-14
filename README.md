@@ -7,6 +7,8 @@ Interactive cross-asset market dashboard built with **Streamlit**: compare stock
 bonds, commodities and currencies, measure risk and test a simple trading strategy.
 Data comes from **Yahoo Finance** (`yfinance`) and **FRED**.
 
+https://market-dashboard-nnfptzqw97h44exkpyhemg.streamlit.app/
+
 <!-- Add your live app link and screenshots here, e.g.
 **Live demo:** https://your-app.streamlit.app
 ![Stocks](docs/screenshots/stocks.png)
