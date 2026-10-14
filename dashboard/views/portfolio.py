@@ -44,9 +44,12 @@ def out_of_sample_section(returns, selected, available, metrics, risk_free):
     step = int(col_b.number_input("Rebalance every (trading days)", 5, 126, 21, key="pf_oos_step"))
     cost_bps = col_c.number_input("Cost (bps of turnover)", 0.0, 100.0, 5.0, key="pf_oos_cost")
     window = int(years * 252)
-    if len(returns) < window + 126:
-        st.info("Not enough history for this test: choose the 5y lookback in the sidebar "
-                "or a shorter estimation window.")
+    needed = window + 126  # the estimation window plus about 6 months to test on
+    if len(returns) < needed:
+        st.info(f"Not enough history for this test: {len(returns)} trading days are available "
+                f"but {needed} are needed ({window} for the estimation window + 126 to test). "
+                "Choose a shorter estimation window (2 years works with the 5y lookback) or a "
+                "longer lookback in the sidebar.")
         return
     with st.spinner("Running the walk-forward test..."):
         oos = cached_walk_forward(returns[selected], window, step, risk_free, cost_bps)
@@ -88,7 +91,7 @@ def stress_section(weights, available):
     """How each portfolio would have behaved in past crises."""
     st.subheader("Stress tests (historical crises)")
     st.caption("Constant weights applied to past crises. "
-               + ", ".join(f"{k} replaces {v}" for k, v in STRESS_PROXIES.items())
+               + ", ".join(f"{v} replaces {k}" for k, v in STRESS_PROXIES.items())
                + " because the original ETF did not exist yet.")
     with st.spinner("Loading long price history..."):
         try:
