@@ -1,6 +1,9 @@
 """Altair charts and styled tables."""
 
+import hashlib
+
 import altair as alt
+import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
@@ -39,14 +42,33 @@ PLOTLY_CONFIG = {"scrollZoom": True, "displaylogo": False,
                  "modeBarButtonsToRemove": ["lasso2d", "select2d"]}
 
 
-def multi_line_chart(table, y_title, step=False, colors=None, x_title="Date", **_unused):
-    """Interactive multi-line chart (Plotly).
+def y_axis_range(values, zoom):
+    """(low, high) of the vertical axis for a zoom factor (1 = whole data, 2 = half the span...).
 
-    Stretch the vertical axis by clicking on it and dragging (drag its middle to move
-    it); box-select on the chart to zoom, mouse wheel to zoom, double-click to reset.
-    colors: optional dict series name -> colour.
+    The axis is centred on the middle of the data. Returns None when the data has no range.
+    """
+    finite = np.asarray(values, dtype=float)
+    finite = finite[np.isfinite(finite)]
+    if finite.size < 2 or finite.max() == finite.min():
+        return None
+    low, high = float(finite.min()), float(finite.max())
+    centre, half_span = (low + high) / 2, (high - low) * 0.55 / zoom
+    return centre - half_span, centre + half_span
+
+
+def multi_line_chart(table, y_title, step=False, colors=None, x_title="Date", **_unused):
+    """Interactive multi-line chart (Plotly) with a slider to stretch the vertical axis.
+
+    colors: optional dict series name -> colour. Mouse wheel or box selection also zoom
+    the chart, double-click resets it.
     """
     colors = colors or {}
+    all_values = pd.concat([table[c].dropna() for c in table.columns]) if len(table.columns) else []
+    seed = hashlib.md5(f"{y_title}|{list(table.columns)}".encode()).hexdigest()[:12]
+    zoom = st.slider("Y-axis zoom (drag to stretch the vertical axis)", 0.5, 10.0, 1.0, 0.1,
+                     format="%.1fx", key=f"yzoom_{seed}",
+                     help="1x shows all the data. Increase it to stretch the curves vertically "
+                          "and see small moves; go below 1x to shrink them.")
     figure = go.Figure()
     for column in table.columns:
         series = table[column].dropna()
@@ -55,15 +77,14 @@ def multi_line_chart(table, y_title, step=False, colors=None, x_title="Date", **
             line={"shape": "hv" if step else "linear", "width": 2,
                   **({"color": colors[column]} if column in colors else {})},
             hovertemplate="%{y:.3f}<extra>%{fullData.name}</extra>"))
+    y_range = y_axis_range(all_values, zoom)
     figure.update_layout(
         hovermode="x unified", xaxis_title=x_title, yaxis_title=y_title,
         margin={"l": 10, "r": 10, "t": 10, "b": 10}, height=430,
         legend={"orientation": "v", "yanchor": "top", "y": 1, "xanchor": "left", "x": 1.01},
-        yaxis={"fixedrange": False, "automargin": True},
+        yaxis={"automargin": True, **({"range": list(y_range)} if y_range else {})},
         xaxis={"fixedrange": False})
     st.plotly_chart(figure, width="stretch", config=PLOTLY_CONFIG)
-    st.caption("Tip: click on the vertical axis and drag to stretch it · mouse wheel to "
-               "zoom · double-click to reset.")
 
 
 def correlation_heatmap(corr):
