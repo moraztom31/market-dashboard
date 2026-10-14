@@ -1,8 +1,9 @@
 """Currencies page: spot cross-rate matrix and pair chart."""
 
+import altair as alt
 import streamlit as st
 
-from dashboard.charts import multi_line_chart
+from dashboard.charts import y_range_control
 from dashboard.config import ACCENT, FX_CURRENCIES
 from dashboard.data import usd_value_table
 from dashboard.views.common import sidebar_controls
@@ -72,8 +73,21 @@ def currencies_page():
         st.info("Numerator and denominator are identical: the rate is always 1.")
         return
     pair = (usd_values[base] / usd_values[quote]).dropna()
-    multi_line_chart(pair.rename(f"{base}/{quote}").to_frame(), f"{quote} per 1 {base}",
-                     colors={f"{base}/{quote}": ACCENT})
+    y_range = y_range_control(pair, f"fx|{base}|{quote}")
+    y_scale = (alt.Scale(domain=list(y_range), zero=False, nice=False) if y_range
+               else alt.Scale(zero=False, nice=True))
+    pair_df = pair.rename("rate").rename_axis("Date").reset_index()
+    pair_chart = (
+        alt.Chart(pair_df)
+        .mark_line(color=ACCENT, clip=True)
+        .encode(
+            x=alt.X("Date:T", title="Date"),
+            y=alt.Y("rate:Q", title=f"{quote} per 1 {base}", scale=y_scale),
+            tooltip=[alt.Tooltip("Date:T"), alt.Tooltip("rate:Q", format=".4f")],
+        )
+        .interactive()  # zoom and pan with the mouse
+    )
+    st.altair_chart(pair_chart, width="stretch")
     change = (pair.iloc[-1] / pair.iloc[0] - 1) * 100
     st.metric(f"{base}/{quote} (last)", f"{pair.iloc[-1]:,.4f}",
               f"{change:+.2f}% over the period")

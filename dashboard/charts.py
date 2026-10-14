@@ -1,8 +1,10 @@
 """Altair charts and styled tables."""
 
+import hashlib
+
 import altair as alt
+import numpy as np
 import pandas as pd
-import plotly.graph_objects as go
 import streamlit as st
 
 from dashboard.config import ACCENT, BLUE, ORANGE
@@ -35,35 +37,56 @@ def return_bars(table, columns):
             slot.altair_chart(chart, width="stretch")
 
 
-PLOTLY_CONFIG = {"scrollZoom": True, "displaylogo": False,
-                 "modeBarButtonsToRemove": ["lasso2d", "select2d"]}
+def y_range_control(values, seed):
+    """Slider (in an expander) to stretch or squeeze the vertical axis of a chart.
 
-
-def multi_line_chart(table, y_title, step=False, colors=None, x_title="Date", **_unused):
-    """Interactive multi-line chart (Plotly).
-
-    Stretch the vertical axis by clicking on it and dragging (drag its middle to move
-    it); box-select on the chart to zoom, mouse wheel to zoom, double-click to reset.
-    colors: optional dict series name -> colour.
+    Returns (low, high) or None when the data has no usable range. The widget key
+    depends on the data bounds, so the slider resets when the data changes.
     """
-    colors = colors or {}
-    figure = go.Figure()
-    for column in table.columns:
-        series = table[column].dropna()
-        figure.add_trace(go.Scatter(
-            x=series.index, y=series.to_numpy(), mode="lines", name=str(column),
-            line={"shape": "hv" if step else "linear", "width": 2,
-                  **({"color": colors[column]} if column in colors else {})},
-            hovertemplate="%{y:.3f}<extra>%{fullData.name}</extra>"))
-    figure.update_layout(
-        hovermode="x unified", xaxis_title=x_title, yaxis_title=y_title,
-        margin={"l": 10, "r": 10, "t": 10, "b": 10}, height=430,
-        legend={"orientation": "v", "yanchor": "top", "y": 1, "xanchor": "left", "x": 1.01},
-        yaxis={"fixedrange": False, "automargin": True},
-        xaxis={"fixedrange": False})
-    st.plotly_chart(figure, width="stretch", config=PLOTLY_CONFIG)
-    st.caption("Tip: click on the vertical axis and drag to stretch it · mouse wheel to "
-               "zoom · double-click to reset.")
+    finite = np.asarray(values, dtype=float)
+    finite = finite[np.isfinite(finite)]
+    if finite.size < 2 or finite.max() == finite.min():
+        return None
+    low, high = float(finite.min()), float(finite.max())
+    span = high - low
+    key = "yr_" + hashlib.md5(f"{seed}|{low:.6g}|{high:.6g}".encode()).hexdigest()[:12]
+    with st.expander("Vertical scale"):
+        return st.slider("Y-axis range", low - span, high + span,
+                         (low - 0.05 * span, high + 0.05 * span), step=span / 400, key=key,
+                         help="Narrow the range to zoom in on small moves, widen it to zoom out. "
+                              "You can also zoom with the mouse wheel and drag on the chart.")
+
+
+def multi_line_chart(table, y_title, step=False, colors=None, x_title="Date", temporal=True,
+                     y_control=True):
+    """Interactive multi-line chart (y-axis fitted to the data, zoom and tooltip).
+
+    colors: optional dict series name -> colour. temporal=False draws a numeric x axis
+    (index named x_title) instead of dates. y_control adds a vertical-scale slider.
+    """
+    colour_scale = (alt.Scale(domain=list(colors), range=list(colors.values()))
+                    if colors else alt.Undefined)
+    y_scale = alt.Scale(zero=False, nice=True)
+    y_range = None
+    long = (table.rename_axis("Date").reset_index()
+            .melt("Date", var_name="Series", value_name="Value").dropna())
+    x_type = "T" if temporal else "Q"
+    if y_control:
+        y_range = y_range_control(long["Value"], f"{y_title}|{list(table.columns)}")
+        if y_range is not None:
+            y_scale = alt.Scale(domain=list(y_range), zero=False, nice=False)
+    chart = (
+        alt.Chart(long)
+        .mark_line(interpolate="step-after" if step else "linear", clip=True)
+        .encode(
+            x=alt.X(f"Date:{x_type}", title=x_title),
+            y=alt.Y("Value:Q", title=y_title, scale=y_scale),
+            color=alt.Color("Series:N", scale=colour_scale, legend=alt.Legend(title=None)),
+            tooltip=[f"Date:{x_type}", "Series:N", alt.Tooltip("Value:Q", format=".3f")],
+        )
+        .interactive()
+    )
+    st.altair_chart(chart, width="stretch")
 
 
 def correlation_heatmap(corr):
