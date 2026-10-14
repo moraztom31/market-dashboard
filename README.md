@@ -5,6 +5,8 @@
 
 🔗 **[Voir l'application en ligne](https://market-dashboard-nnfptzqw97h44exkpyhemg.streamlit.app/)**
 
+![Demo](docs/demo.gif)
+
 Interactive cross-asset market dashboard built with **Streamlit**: compare stocks,
 bonds, commodities and currencies, measure risk and test a simple trading strategy.
 Data comes from **Yahoo Finance** (`yfinance`) and **FRED**.
@@ -58,10 +60,6 @@ Every line chart has a **vertical scale** control (plus mouse-wheel zoom and dra
 ## Key findings
 - Out-of-sample Sharpe: ... vs benchmark ...
 - GARCH vs EWMA RMSE: ...
--->
-
-<!-- Demo: add docs/demo.gif then uncomment
-![Demo](docs/demo.gif)
 -->
 
 ## Run locally
