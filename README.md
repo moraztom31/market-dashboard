@@ -3,11 +3,11 @@
 [![CI](https://github.com/moraztom31/market-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/moraztom31/market-dashboard/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.12+-blue)
 
+🔗 **[Voir l'application en ligne](https://market-dashboard-nnfptzqw97h44exkpyhemg.streamlit.app/)**
+
 Interactive cross-asset market dashboard built with **Streamlit**: compare stocks,
 bonds, commodities and currencies, measure risk and test a simple trading strategy.
 Data comes from **Yahoo Finance** (`yfinance`) and **FRED**.
-
-https://market-dashboard-nnfptzqw97h44exkpyhemg.streamlit.app/
 
 <!-- Add your live app link and screenshots here, e.g.
 **Live demo:** https://your-app.streamlit.app
