@@ -56,11 +56,32 @@ Every line chart has a **vertical scale** control (plus mouse-wheel zoom and dra
 - **Data resilience**: per-ticker downloads with retries, failures never cached,
   clear on-screen messages when a source is unavailable.
 
-<!-- After running the app on the 5y lookback, add your key findings here, e.g.
 ## Key findings
-- Out-of-sample Sharpe: ... vs benchmark ...
-- GARCH vs EWMA RMSE: ...
--->
+
+Results observed in the live app on 14 October 2026 (5-year lookback; they change as the
+market data does).
+
+**Out-of-sample portfolio test** (2-year estimation window, monthly rebalancing, 5 bps cost):
+
+| Portfolio | Total return | Sharpe | Max drawdown |
+|---|---|---|---|
+| Benchmark 40/30/30 | +37.3% | 1.38 | -10.0% |
+| Equal weight | +33.9% | 1.30 | -9.3% |
+| Max Sharpe (optimised) | +33.4% | 0.72 | -16.9% |
+| Inverse volatility | +21.7% | 1.07 | -7.8% |
+| Min volatility | +9.5% | 0.59 | -6.5% |
+
+- The simple 40/30/30 allocation beats every optimised portfolio on a risk-adjusted basis:
+  re-optimising on past data did not add value out-of-sample, and Max Sharpe suffered the
+  deepest drawdown.
+- In the historical stress tests (2008, COVID-19), the optimised Max Sharpe portfolio also
+  lost more than the benchmark.
+
+**Volatility forecasts** (S&P 500, 21-day horizon, 35 monthly walk-forward forecasts,
+RMSE in volatility points): GARCH(1,1) 7.84, last 21-day realised volatility 8.04,
+EWMA 8.07. GARCH is slightly more accurate than the naive estimate but tends to
+over-forecast (bias +1.94), and EWMA has the lowest mean absolute error (5.22): the
+gain from a more sophisticated model is modest.
 
 ## Run locally
 

@@ -21,6 +21,11 @@ def apply_lookback():
 
 def sidebar_controls():
     """Lookback / start / end widgets shared by every page. Returns (start, end)."""
+    # Streamlit drops the state of keyed widgets when they are not rendered on the previous
+    # page run; re-assigning the values keeps them when the user switches page.
+    for key in ("lookback", "start", "end"):
+        if key in st.session_state:
+            st.session_state[key] = st.session_state[key]
     st.session_state.setdefault("start", date.today() - timedelta(days=365))
     st.session_state.setdefault("end", date.today())
     with st.sidebar:
