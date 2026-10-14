@@ -9,15 +9,19 @@ Interactive cross-asset market dashboard built with **Streamlit**: compare stock
 bonds, commodities and currencies, measure risk and test a simple trading strategy.
 Data comes from **Yahoo Finance** (`yfinance`) and **FRED**.
 
-<!-- Add your live app link and screenshots here, e.g.
-**Live demo:** https://your-app.streamlit.app
-![Stocks](docs/screenshots/stocks.png)
--->
+## Screenshots
+
+| Currencies: clickable spot matrix | Bonds: Treasury curve and OECD yields |
+|---|---|
+| ![Currencies](docs/screenshots/currencies.webp) | ![Bonds](docs/screenshots/bonds.webp) |
+
+![Backtest](docs/screenshots/backtest.webp)
 
 ## Features
 
 | Page | What it shows |
 |------|---------------|
+| **Overview** | Snapshot of key markets (S&P 500, Nasdaq, US 10Y yield, gold, oil, Bitcoin, EUR/USD, USD/JPY) with daily moves, indexed performance and returns |
 | **Stocks / Commodities** | Latest prices, trailing (7d, 30d, 90d, 1y) and calendar (WTD, MTD, QTD, YTD) returns as tables and bar charts, indexed price history |
 | **Bonds** | OECD 10-year yields (snapshot + history), U.S. Treasury yield curve (snapshot + history) from FRED |
 | **Currencies** | Clickable spot cross-rate matrix for 8 currencies and the history of the selected pair |

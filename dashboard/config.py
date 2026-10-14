@@ -68,3 +68,17 @@ PORTFOLIO_UNIVERSE = {
 PORTFOLIO_DEFAULT_ASSETS = ["URTH", "IEF", "DBC"]
 # Reference allocation: 40% World equities, 30% Government bonds, 30% Commodities
 BENCHMARK_WEIGHTS = {"URTH": 0.40, "IEF": 0.30, "DBC": 0.30}
+
+# Home page: key market indicators (symbol -> label). Yields are shown in % with bp changes.
+HOME_ASSETS = {
+    "^GSPC": "S&P 500",
+    "^IXIC": "Nasdaq",
+    "^TNX": "US 10Y yield",
+    "GC=F": "Gold",
+    "CL=F": "WTI crude",
+    "BTC-USD": "Bitcoin",
+    "EURUSD=X": "EUR/USD",
+    "JPY=X": "USD/JPY",
+}
+HOME_YIELD_SYMBOLS = {"^TNX"}
+HOME_DEFAULT_CHART = ["^GSPC", "GC=F", "CL=F", "EURUSD=X"]

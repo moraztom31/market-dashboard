@@ -4,6 +4,7 @@ import pytest
 from streamlit.testing.v1 import AppTest
 
 PAGES = [
+    ("dashboard.views.home", "home_page"),
     ("dashboard.views.assets", "stocks_page"),
     ("dashboard.views.assets", "commodities_page"),
     ("dashboard.views.bonds", "bonds_page"),
