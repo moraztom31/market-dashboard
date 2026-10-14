@@ -55,3 +55,16 @@ FX_SYMBOLS = {
 
 TRAILING_DAYS = {"7-day": 7, "30-day": 30, "90-day": 90, "1-year": 365}
 LOOKBACKS = {"1m": 30, "3m": 91, "6m": 182, "1y": 365, "2y": 730, "5y": 1826}
+
+# Portfolio page: ETF proxies for each asset class
+PORTFOLIO_UNIVERSE = {
+    "URTH": "World equities (MSCI World)",
+    "EEM": "Emerging equities",
+    "IEF": "Gov. bonds (US Treasuries 7-10y)",
+    "TLT": "Gov. bonds (US Treasuries 20y+)",
+    "GLD": "Gold",
+    "DBC": "Commodities (broad basket)",
+}
+PORTFOLIO_DEFAULT_ASSETS = ["URTH", "IEF", "DBC"]
+# Reference allocation: 40% World equities, 30% Government bonds, 30% Commodities
+BENCHMARK_WEIGHTS = {"URTH": 0.40, "IEF": 0.30, "DBC": 0.30}

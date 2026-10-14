@@ -20,6 +20,7 @@ Data comes from **Yahoo Finance** (`yfinance`) and **FRED**.
 | **Stocks / Commodities** | Latest prices, trailing (7d, 30d, 90d, 1y) and calendar (WTD, MTD, QTD, YTD) returns as tables and bar charts, indexed price history |
 | **Bonds** | OECD 10-year yields (snapshot + history), U.S. Treasury yield curve (snapshot + history) from FRED |
 | **Currencies** | Clickable spot cross-rate matrix for 8 currencies and the history of the selected pair |
+| **Portfolio** | Long-only all-weather portfolio: 40% World equities / 30% Government bonds / 30% Commodities benchmark vs custom, max-Sharpe, min-volatility and inverse-volatility allocations, with risk-return scatter, allocations and correlations |
 | **Backtest** | Long-only moving-average crossover vs buy & hold, with transaction costs, equity curves and risk metrics |
 | **Explorer tab** (Stocks, Commodities, Bonds) | Form to pick instruments and dates, normalise to base 100, add short/long moving averages, then get annualised return, volatility, Sharpe ratio, max drawdown, correlation heatmap and drawdown chart |
 

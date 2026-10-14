@@ -9,6 +9,7 @@ PAGES = [
     ("dashboard.views.bonds", "bonds_page"),
     ("dashboard.views.currencies", "currencies_page"),
     ("dashboard.views.backtest", "backtest_page"),
+    ("dashboard.views.portfolio", "portfolio_page"),
 ]
 
 

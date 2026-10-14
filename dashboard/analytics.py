@@ -114,3 +114,56 @@ def backtest_crossover(price, short_window, long_window, cost_bps=0.0):
         "Buy & hold": (1 + returns).cumprod() * 100,
     })
     return equity, position, int(trades.sum())
+
+
+# ---- portfolio construction ---------------------------------------------------
+def portfolio_equity(returns, weights):
+    """Equity curve (base 100) of a constant-weight portfolio rebalanced daily."""
+    weights = weights.reindex(returns.columns).fillna(0.0)
+    portfolio_returns = returns.mul(weights, axis=1).sum(axis=1)
+    return (1 + portfolio_returns).cumprod() * 100
+
+
+def portfolio_stats(returns, weights, risk_free=0.0):
+    """Expected annual return, volatility and Sharpe ratio from historical mean/covariance."""
+    weights = weights.reindex(returns.columns).fillna(0.0).to_numpy()
+    mean = returns.mean().to_numpy() * TRADING_DAYS
+    cov = returns.cov().to_numpy() * TRADING_DAYS
+    expected = float(weights @ mean)
+    volatility = float(np.sqrt(weights @ cov @ weights))
+    sharpe = (expected - risk_free) / volatility if volatility > 0 else float("nan")
+    return {"Return": expected, "Volatility": volatility, "Sharpe ratio": sharpe}
+
+
+def simulate_portfolios(returns, n_samples=20_000, risk_free=0.0, seed=0):
+    """Random long-only portfolios (weights >= 0, sum = 1) plus each single asset."""
+    n_assets = returns.shape[1]
+    rng = np.random.default_rng(seed)
+    weights = np.vstack([np.eye(n_assets), rng.dirichlet(np.ones(n_assets), size=n_samples)])
+    mean = returns.mean().to_numpy() * TRADING_DAYS
+    cov = returns.cov().to_numpy() * TRADING_DAYS
+    expected = weights @ mean
+    volatility = np.sqrt(np.einsum("ij,jk,ik->i", weights, cov, weights))
+    sharpe = (expected - risk_free) / np.where(volatility > 0, volatility, np.nan)
+    simulation = pd.DataFrame(weights, columns=returns.columns)
+    simulation["Return"] = expected
+    simulation["Volatility"] = volatility
+    simulation["Sharpe ratio"] = sharpe
+    return simulation
+
+
+def pick_portfolio(simulation, kind, assets):
+    """Weights of the best simulated portfolio: 'max_sharpe' or 'min_volatility'."""
+    if kind == "max_sharpe":
+        row = simulation["Sharpe ratio"].idxmax()
+    elif kind == "min_volatility":
+        row = simulation["Volatility"].idxmin()
+    else:
+        raise ValueError(f"unknown kind: {kind}")
+    return simulation.loc[row, list(assets)].astype(float)
+
+
+def inverse_volatility_weights(returns):
+    """Risk-parity-like weights: each asset weighted by 1 / volatility."""
+    inverse = 1 / returns.std()
+    return inverse / inverse.sum()

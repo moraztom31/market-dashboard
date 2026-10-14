@@ -83,3 +83,42 @@ def line_with_points(table, x, y, y_title):
     )
     st.altair_chart(base.mark_line(color=ACCENT) + base.mark_point(color=ACCENT, filled=True, size=60),
                     width="stretch")
+
+
+def frontier_chart(simulation, marks):
+    """Scatter of simulated long-only portfolios (colour = Sharpe) with highlighted portfolios.
+
+    marks: DataFrame with columns Portfolio, Volatility, Return.
+    """
+    sample = simulation.sample(min(len(simulation), 4000), random_state=0)
+    cloud = alt.Chart(sample).mark_circle(size=18, opacity=0.5).encode(
+        x=alt.X("Volatility:Q", title="Annual volatility", axis=alt.Axis(format=".0%"),
+                scale=alt.Scale(zero=False)),
+        y=alt.Y("Return:Q", title="Expected annual return", axis=alt.Axis(format=".0%"),
+                scale=alt.Scale(zero=False)),
+        color=alt.Color("Sharpe ratio:Q", scale=alt.Scale(scheme="viridis"),
+                        legend=alt.Legend(title="Sharpe")),
+        tooltip=[alt.Tooltip("Volatility:Q", format=".1%"), alt.Tooltip("Return:Q", format=".1%"),
+                 alt.Tooltip("Sharpe ratio:Q", format=".2f")],
+    )
+    points = alt.Chart(marks).mark_point(filled=True, size=140, color="white",
+                                         stroke=ACCENT, strokeWidth=2).encode(
+        x="Volatility:Q", y="Return:Q",
+        tooltip=["Portfolio:N", alt.Tooltip("Volatility:Q", format=".1%"),
+                 alt.Tooltip("Return:Q", format=".1%")])
+    labels = alt.Chart(marks).mark_text(dy=-14, color="white", fontSize=11).encode(
+        x="Volatility:Q", y="Return:Q", text="Portfolio:N")
+    st.altair_chart((cloud + points + labels).interactive(), width="stretch")
+
+
+def weights_bars(weights):
+    """Stacked bars of portfolio weights (rows = assets, columns = portfolios)."""
+    long = (weights.rename_axis("Asset").reset_index()
+            .melt("Asset", var_name="Portfolio", value_name="Weight"))
+    chart = alt.Chart(long).mark_bar().encode(
+        x=alt.X("Portfolio:N", sort=None, title=None, axis=alt.Axis(labelAngle=-20)),
+        y=alt.Y("Weight:Q", title="Weight", axis=alt.Axis(format="%"), stack="normalize"),
+        color=alt.Color("Asset:N", legend=alt.Legend(title=None)),
+        tooltip=["Portfolio:N", "Asset:N", alt.Tooltip("Weight:Q", format=".0%")],
+    )
+    st.altair_chart(chart, width="stretch")
