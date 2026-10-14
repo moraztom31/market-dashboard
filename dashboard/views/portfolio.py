@@ -1,12 +1,15 @@
 """Portfolio page: all-weather benchmark vs custom and optimised long-only portfolios."""
 
+from datetime import date
+
 import pandas as pd
 import streamlit as st
 
 from dashboard import analytics
-from dashboard.charts import correlation_heatmap, frontier_chart, multi_line_chart, weights_bars
+from dashboard.charts import (correlation_heatmap, frontier_chart, multi_line_chart,
+                              return_bars, show_returns_table, weights_bars)
 from dashboard.config import (ACCENT, BENCHMARK_WEIGHTS, BLUE, PORTFOLIO_DEFAULT_ASSETS,
-                              PORTFOLIO_UNIVERSE)
+                              PORTFOLIO_UNIVERSE, STRESS_PROXIES, STRESS_SCENARIOS)
 from dashboard.data import download_close_prices
 from dashboard.views.common import sidebar_controls
 
@@ -19,6 +22,95 @@ COLOURS = {BENCHMARK: "#9aa0a6", "Custom": BLUE, "Max Sharpe": ACCENT,
 def cached_simulation(returns, risk_free):
     """20,000 random long-only portfolios, kept in memory between reruns."""
     return analytics.simulate_portfolios(returns, risk_free=risk_free)
+
+
+@st.cache_data(show_spinner=False, ttl=3600)
+def cached_walk_forward(returns, window, step, risk_free, cost_bps):
+    """Out-of-sample returns of the four rebalanced strategies (kept in memory)."""
+    strategies = {"Max Sharpe": "max_sharpe", "Min volatility": "min_volatility",
+                  "Inverse volatility": "inverse_volatility", "Equal weight": "equal_weight"}
+    return pd.DataFrame({name: analytics.walk_forward_returns(
+        returns, kind, window, step, risk_free, cost_bps) for name, kind in strategies.items()})
+
+
+def out_of_sample_section(returns, selected, available, metrics, risk_free):
+    """Walk-forward test: weights re-estimated on past data only, applied to the future."""
+    st.subheader("Out-of-sample test (walk-forward)")
+    st.caption("The optimised portfolios above use the whole period to choose their weights, "
+               "which flatters them. Here the weights are re-estimated every few weeks on "
+               "the previous years only and applied to the following weeks: a fairer test.")
+    col_a, col_b, col_c = st.columns(3)
+    years = col_a.number_input("Estimation window (years)", 1.0, 5.0, 2.0, 0.5, key="pf_oos_years")
+    step = int(col_b.number_input("Rebalance every (trading days)", 5, 126, 21, key="pf_oos_step"))
+    cost_bps = col_c.number_input("Cost (bps of turnover)", 0.0, 100.0, 5.0, key="pf_oos_cost")
+    window = int(years * 252)
+    if len(returns) < window + 126:
+        st.info("Not enough history for this test: choose the 5y lookback in the sidebar "
+                "or a shorter estimation window.")
+        return
+    with st.spinner("Running the walk-forward test..."):
+        oos = cached_walk_forward(returns[selected], window, step, risk_free, cost_bps)
+    if all(a in available for a in BENCHMARK_WEIGHTS):
+        bench = returns[list(BENCHMARK_WEIGHTS)].mul(pd.Series(BENCHMARK_WEIGHTS), axis=1).sum(axis=1)
+        oos[BENCHMARK] = bench.reindex(oos.index)
+    equity = (1 + oos).cumprod() * 100
+    multi_line_chart(equity, "Out-of-sample value (base 100)",
+                     colors={**COLOURS, "Equal weight": "#d9a441"})
+    out_metrics = analytics.risk_metrics(equity, risk_free)
+    out_metrics.insert(0, "Total return", equity.iloc[-1] / 100 - 1)
+    st.dataframe(
+        out_metrics.style.format({"Total return": "{:+.1%}", "Annual return": "{:+.1%}",
+                                  "Annual volatility": "{:.1%}", "Sharpe ratio": "{:.2f}",
+                                  "Max drawdown": "{:.1%}"}, na_rep="n/a"),
+        width="stretch")
+    sharpe_out = out_metrics["Sharpe ratio"]
+    best = sharpe_out.idxmax()
+    message = f"Out-of-sample, the best Sharpe ratio is **{best}** ({sharpe_out[best]:.2f})"
+    if BENCHMARK in sharpe_out.index and best != BENCHMARK:
+        message += f" versus {sharpe_out[BENCHMARK]:.2f} for the benchmark"
+    if "Max Sharpe" in metrics.index:
+        message += (f". The in-sample Max Sharpe portfolio showed {metrics.loc['Max Sharpe', 'Sharpe ratio']:.2f}"
+                    f" over the whole period but only {sharpe_out['Max Sharpe']:.2f} out-of-sample: "
+                    "the gap is the price of optimising on the same data you evaluate")
+    st.info(message + ".")
+
+
+@st.cache_data(show_spinner=False, ttl=24 * 3600)
+def stress_prices(symbols):
+    """Long price history for the stress scenarios (proxies replace young ETFs)."""
+    proxied = tuple(sorted({STRESS_PROXIES.get(s, s) for s in symbols}))
+    prices = download_close_prices(proxied, date(2007, 1, 1), date.today())
+    inverse = {STRESS_PROXIES[s]: s for s in symbols if s in STRESS_PROXIES}
+    return prices.rename(columns=inverse)
+
+
+def stress_section(weights, available):
+    """How each portfolio would have behaved in past crises."""
+    st.subheader("Stress tests (historical crises)")
+    st.caption("Constant weights applied to past crises. "
+               + ", ".join(f"{k} replaces {v}" for k, v in STRESS_PROXIES.items())
+               + " because the original ETF did not exist yet.")
+    with st.spinner("Loading long price history..."):
+        try:
+            prices = stress_prices(tuple(available))
+        except Exception as error:
+            st.error(f"The long history could not be loaded: {error}")
+            return
+    if prices.empty:
+        st.warning("No long history was returned.")
+        return
+    returns_table, drawdown_table = {}, {}
+    for scenario, (start, end) in STRESS_SCENARIOS.items():
+        results = {portfolio: analytics.scenario_result(prices, weights[portfolio], start, end)
+                   for portfolio in weights.columns}
+        returns_table[scenario] = {p: r[0] * 100 for p, r in results.items()}
+        drawdown_table[scenario] = {p: r[1] * 100 for p, r in results.items()}
+    returns_table, drawdown_table = pd.DataFrame(returns_table), pd.DataFrame(drawdown_table)
+    return_bars(returns_table, list(returns_table.columns))
+    st.write("**Total return over each crisis (%)**")
+    show_returns_table(returns_table)
+    st.write("**Worst drawdown during each crisis (%)**")
+    show_returns_table(drawdown_table)
 
 
 def portfolio_page():
@@ -109,6 +201,9 @@ def portfolio_page():
     correlation_heatmap(analytics.correlation_matrix(prices[available]).rename(
         index=names, columns=names))
 
-    st.caption("Method: constant weights rebalanced daily on ETF proxies; Max Sharpe and "
-               "Min volatility are optimised in-sample on the same period (illustrative, "
-               "no out-of-sample guarantee). Educational use only, not investment advice.")
+    out_of_sample_section(returns, selected, available, metrics, risk_free)
+    stress_section(weights, available)
+
+    st.caption("Method: constant weights rebalanced daily on ETF proxies; the portfolios in the "
+               "first sections are optimised in-sample (illustrative); the out-of-sample test above "
+               "is the fair comparison. Educational use only, not investment advice.")

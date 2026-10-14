@@ -85,3 +85,11 @@ HOME_DEFAULT_CHART = ["^GSPC", "GC=F", "CL=F", "EURUSD=X"]
 
 # Volatility page: instruments
 VOL_SYMBOLS = {**BACKTEST_SYMBOLS, "BTC-USD": "Bitcoin", "EURUSD=X": "EUR/USD"}
+
+# Stress tests: historical scenarios (start, end) and long-history proxies for young ETFs
+STRESS_SCENARIOS = {
+    "2008 financial crisis": ("2008-09-02", "2009-03-09"),
+    "COVID-19 crash": ("2020-02-19", "2020-03-23"),
+    "2022 rates shock": ("2022-01-03", "2022-10-12"),
+}
+STRESS_PROXIES = {"URTH": "ACWI"}  # URTH starts in 2012: ACWI covers 2008

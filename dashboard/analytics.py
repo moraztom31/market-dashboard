@@ -167,3 +167,50 @@ def inverse_volatility_weights(returns):
     """Risk-parity-like weights: each asset weighted by 1 / volatility."""
     inverse = 1 / returns.std()
     return inverse / inverse.sum()
+
+
+# ---- out-of-sample (walk-forward) evaluation ------------------------------------
+def choose_weights(returns, kind, risk_free=0.0, n_samples=3000, seed=0):
+    """Weights chosen on `returns`: max_sharpe, min_volatility, inverse_volatility, equal_weight."""
+    assets = list(returns.columns)
+    if kind == "equal_weight":
+        return pd.Series(1 / len(assets), index=assets)
+    if kind == "inverse_volatility":
+        return inverse_volatility_weights(returns)
+    simulation = simulate_portfolios(returns, n_samples, risk_free, seed)
+    return pick_portfolio(simulation, kind, assets)
+
+
+def walk_forward_returns(returns, kind, window=504, step=21, risk_free=0.0, cost_bps=0.0,
+                         n_samples=3000):
+    """Out-of-sample daily returns of a strategy.
+
+    Every `step` days the weights are re-estimated on the previous `window` days only,
+    then applied to the next `step` days (no look-ahead). The cost is charged on the
+    turnover (sum of absolute weight changes) at each rebalance.
+    """
+    pieces, previous = [], None
+    for start in range(window, len(returns), step):
+        train = returns.iloc[start - window:start]
+        block = returns.iloc[start:start + step]
+        weights = choose_weights(train, kind, risk_free, n_samples)
+        block_returns = block.mul(weights, axis=1).sum(axis=1)
+        if previous is not None:
+            turnover = (weights - previous).abs().sum()
+            block_returns.iloc[0] -= turnover * cost_bps / 10_000
+        previous = weights
+        pieces.append(block_returns)
+    return pd.concat(pieces) if pieces else pd.Series(dtype=float)
+
+
+def scenario_result(prices, weights, start, end):
+    """(total return, max drawdown) of constant weights over a historical window.
+
+    Returns (nan, nan) when a held asset has no data over the whole window.
+    """
+    held = weights[weights.abs() > 0].index
+    window = prices.loc[start:end, [a for a in held if a in prices.columns]]
+    if len(held) == 0 or window.shape[1] < len(held) or len(window) < 5 or window.isna().any().any():
+        return float("nan"), float("nan")
+    equity = portfolio_equity(window.pct_change().dropna(), weights)
+    return float(equity.iloc[-1] / 100 - 1), float(max_drawdown(equity.to_frame()).iloc[0])

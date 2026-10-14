@@ -31,12 +31,38 @@ Data comes from **Yahoo Finance** (`yfinance`) and **FRED**.
 | **Stocks / Commodities** | Latest prices, trailing (7d, 30d, 90d, 1y) and calendar (WTD, MTD, QTD, YTD) returns as tables and bar charts, indexed price history |
 | **Bonds** | OECD 10-year yields (snapshot + history), U.S. Treasury yield curve (snapshot + history) from FRED |
 | **Currencies** | Clickable spot cross-rate matrix for 8 currencies and the history of the selected pair |
-| **Portfolio** | Long-only all-weather portfolio: 40% World equities / 30% Government bonds / 30% Commodities benchmark vs custom, max-Sharpe, min-volatility and inverse-volatility allocations, with risk-return scatter, allocations and correlations |
+| **Portfolio** | Long-only all-weather portfolio: 40% World equities / 30% Government bonds / 30% Commodities benchmark vs custom, max-Sharpe, min-volatility and inverse-volatility allocations, with risk-return scatter, allocations and correlations, an **out-of-sample walk-forward test** and **stress tests** (2008, COVID-19, 2022) |
 | **Backtest** | Long-only moving-average crossover vs buy & hold, with transaction costs, equity curves and risk metrics |
-| **Volatility** | Realised, EWMA (RiskMetrics) and GARCH(1,1) volatility, with a forecast of the next trading days, long-run level and model parameters |
+| **Volatility** | Realised, EWMA (RiskMetrics) and GARCH(1,1) volatility, a forecast of the next trading days, and a walk-forward test comparing each model with the volatility actually realised |
 | **Explorer tab** (Stocks, Commodities, Bonds) | Form to pick instruments and dates, normalise to base 100, add short/long moving averages, then get annualised return, volatility, Sharpe ratio, max drawdown, correlation heatmap and drawdown chart |
 
 Every line chart has a **vertical scale** control (plus mouse-wheel zoom and drag) to stretch the y-axis and see small moves.
+
+## Methodology and robustness
+
+- **No look-ahead**: the strategy backtest lags its signal by one day; the portfolio
+  walk-forward test re-estimates weights every few weeks using *only* the previous
+  years, then applies them to the following weeks, with transaction costs on turnover.
+- **In-sample vs out-of-sample**: portfolios optimised on the whole period (Max Sharpe,
+  Min volatility) look better than they would in practice; the app shows both so the
+  gap is visible.
+- **Forecast evaluation**: GARCH(1,1) and EWMA volatility forecasts are compared with the
+  volatility realised afterwards (RMSE, MAE, bias) and with a naive baseline.
+- **Stress tests**: constant-weight portfolios replayed through the 2008 financial crisis,
+  the COVID-19 crash and the 2022 rates shock (a long-history ETF replaces MSCI World
+  before 2012).
+- **Data resilience**: per-ticker downloads with retries, failures never cached,
+  clear on-screen messages when a source is unavailable.
+
+<!-- After running the app on the 5y lookback, add your key findings here, e.g.
+## Key findings
+- Out-of-sample Sharpe: ... vs benchmark ...
+- GARCH vs EWMA RMSE: ...
+-->
+
+<!-- Demo: add docs/demo.gif then uncomment
+![Demo](docs/demo.gif)
+-->
 
 ## Run locally
 

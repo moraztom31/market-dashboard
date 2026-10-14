@@ -19,6 +19,12 @@ def cached_garch_fit(returns, horizon):
     return volatility.fit_garch(returns, horizon)
 
 
+@st.cache_data(show_spinner=False, ttl=3600)
+def cached_evaluation(returns, horizon, decay):
+    """Walk-forward forecast evaluation (about 30 GARCH fits), kept in memory."""
+    return volatility.evaluate_forecasts(returns, horizon=horizon, decay=decay)
+
+
 def volatility_page():
     st.title(":material/monitoring: Volatility forecast")
     st.write("Volatility measures how much a price swings. It is not constant: calm and "
@@ -102,3 +108,26 @@ def volatility_page():
     st.caption("alpha + beta close to 1 means volatility is very persistent: shocks fade "
                "slowly. Estimated on the selected period only; forecasts are statistical "
                "estimates, not investment advice.")
+
+    # ---- honest evaluation: were the forecasts any good? ----
+    st.subheader("How good are the forecasts? (walk-forward test)")
+    st.caption(f"At each date (every month), each model forecasts the average volatility of "
+               f"the next {horizon} trading days using only past data; the forecast is then "
+               "compared with the volatility actually realised.")
+    if len(returns) < 500 + horizon + 60:
+        st.info("Not enough history for this test: choose the 5y lookback in the sidebar.")
+        return
+    with st.spinner("Running the walk-forward test..."):
+        evaluation = cached_evaluation(returns, horizon, decay)
+    if len(evaluation) < 5:
+        st.warning("The test could not be run on this period.")
+        return
+    errors = volatility.forecast_errors(evaluation)
+    st.dataframe(errors.style.format("{:.2f}"), width="stretch")
+    best = errors.index[0]
+    st.info(f"Lowest error (RMSE): **{best}** ({errors.loc[best, 'RMSE']:.2f} volatility "
+            f"points over {len(evaluation)} forecasts). A model that beats the naive "
+            "'last 21d realised' estimate adds real information.")
+    multi_line_chart(evaluation, "Annualised volatility (%)",
+                     colors={"Realised (next days)": "#ffffff", "GARCH(1,1)": ACCENT,
+                             "EWMA": BLUE, "Last 21d realised": "#9aa0a6"})

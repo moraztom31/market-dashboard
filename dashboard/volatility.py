@@ -69,3 +69,38 @@ def fit_garch(returns, horizon=21):
         long_run_volatility=float(np.sqrt(long_run_variance * TRADING_DAYS)),
         half_life=float(half_life),
     )
+
+
+def evaluate_forecasts(returns, horizon=21, min_train=500, step=21, decay=0.94):
+    """Walk-forward test: forecast the average volatility of the next `horizon` days.
+
+    At each origin (every `step` days, using only past data) three forecasts are made:
+    GARCH(1,1), EWMA (flat) and the last 21-day realised volatility. They are compared
+    with the volatility actually realised over the next `horizon` days.
+    """
+    rows = []
+    for origin in range(min_train, len(returns) - horizon + 1, step):
+        train, future = returns.iloc[:origin], returns.iloc[origin:origin + horizon]
+        try:
+            garch = fit_garch(train, horizon).forecast
+        except Exception:  # a failed fit only removes this origin
+            continue
+        rows.append({
+            "Date": returns.index[origin - 1],
+            "Realised (next days)": future.std() * np.sqrt(TRADING_DAYS),
+            "GARCH(1,1)": float(np.sqrt((garch ** 2).mean())),
+            "EWMA": float(ewma_volatility(train, decay).iloc[-1]),
+            "Last 21d realised": float(realized_volatility(train).iloc[-1]),
+        })
+    return pd.DataFrame(rows).set_index("Date") if rows else pd.DataFrame()
+
+
+def forecast_errors(evaluation):
+    """RMSE, MAE and bias (forecast - realised, in volatility points) of each model."""
+    realised = evaluation["Realised (next days)"]
+    errors = {}
+    for model in evaluation.columns.drop("Realised (next days)"):
+        diff = evaluation[model] - realised
+        errors[model] = {"RMSE": float(np.sqrt((diff ** 2).mean())),
+                         "MAE": float(diff.abs().mean()), "Bias": float(diff.mean())}
+    return pd.DataFrame(errors).T.sort_values("RMSE")
