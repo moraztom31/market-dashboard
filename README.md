@@ -2,7 +2,6 @@
 
 [![CI](https://github.com/moraztom31/market-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/moraztom31/market-dashboard/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.12+-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
 
 Interactive cross-asset market dashboard built with **Streamlit**: compare stocks,
 bonds, commodities and currencies, measure risk and test a simple trading strategy.
@@ -64,7 +63,3 @@ it on every push.
 For educational purposes only. This is not investment advice; past performance
 does not predict future results. Data is provided by Yahoo Finance and FRED and
 may be delayed or inaccurate.
-
-## License
-
-MIT
