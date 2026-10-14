@@ -15,7 +15,7 @@ def select_pair(base, quote):
 
 
 def currencies_page():
-    st.title("💱 Currencies")
+    st.title(":material/euro_symbol: Currencies")
     st.write("Spot cross matrix for " + ", ".join(FX_CURRENCIES) + ". Each cell is "
              "units of the column currency per 1 unit of the row currency.")
 

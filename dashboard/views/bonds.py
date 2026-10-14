@@ -11,7 +11,7 @@ from dashboard.views.common import sidebar_controls
 
 
 def bonds_page():
-    st.title("📉 Bonds")
+    st.title(":material/stacked_line_chart: Bonds")
     st.write("U.S. Treasury curve and OECD 10-year government yields (FRED).")
     start, end = sidebar_controls()
     with st.sidebar:

@@ -5,18 +5,19 @@ import streamlit as st
 
 from dashboard import analytics
 from dashboard.charts import multi_line_chart
-from dashboard.config import BACKTEST_SYMBOLS
+from dashboard.config import ACCENT, BACKTEST_SYMBOLS, BLUE
 from dashboard.data import download_close_prices
 from dashboard.views.common import sidebar_controls
 
 
 def backtest_page():
-    st.title("🧪 Strategy backtest")
+    st.title(":material/science: Strategy backtest")
     st.write("Long-only moving-average crossover: hold the asset while the short "
              "moving average is above the long one, stay in cash otherwise. "
              "The signal is lagged by one day (no look-ahead bias).")
 
     start, end = sidebar_controls()
+    st.caption("Tip: use the 5y lookback in the sidebar to get more signals.")
     with st.sidebar:
         symbol = st.selectbox("Instrument", list(BACKTEST_SYMBOLS),
                               format_func=lambda s: BACKTEST_SYMBOLS[s], key="bt_symbol")
@@ -61,7 +62,8 @@ def backtest_page():
         width="stretch")
 
     st.subheader("Equity curves (base 100)")
-    multi_line_chart(equity, "Value (base 100)")
+    multi_line_chart(equity, "Value (base 100)",
+                     colors={"Strategy": ACCENT, "Buy & hold": BLUE})
 
     st.subheader("Price and moving averages")
     multi_line_chart(pd.DataFrame({

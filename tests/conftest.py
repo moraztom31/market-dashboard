@@ -38,7 +38,7 @@ def fake_fred(monkeypatch):
     def fake_get(url, timeout=None):
         match = re.search(r"id=([^&]+)&cosd=([^&]+)&coed=(.+)", url)
         ids, start, end = match.group(1).split(","), match.group(2), match.group(3)
-        index = pd.date_range(start, end, freq="D")
+        index = pd.date_range("2000-01-01", end, freq="D")  # like FRED: ignores `cosd`
         frame = pd.DataFrame(np.random.default_rng(1).random((len(index), len(ids))) + 3,
                              columns=ids)
         frame.insert(0, "observation_date", index.strftime("%Y-%m-%d"))

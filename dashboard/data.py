@@ -47,7 +47,10 @@ def download_fred(series_ids, start, end):
     data = pd.read_csv(io.StringIO(response.text), na_values=["."])
     data = data.set_index(data.columns[0])
     data.index = pd.to_datetime(data.index)
-    return data.apply(pd.to_numeric, errors="coerce").dropna(how="all")
+    data = data.apply(pd.to_numeric, errors="coerce")
+    # FRED can return the full history whatever the requested dates: filter here
+    data = data.loc[pd.Timestamp(start):pd.Timestamp(end)]
+    return data.dropna(how="all")
 
 
 def usd_value_table(start, end):

@@ -34,8 +34,13 @@ def return_bars(table, columns):
             slot.altair_chart(chart, width="stretch")
 
 
-def multi_line_chart(table, y_title, step=False):
-    """Interactive multi-line chart (y-axis fitted to the data, zoom and tooltip)."""
+def multi_line_chart(table, y_title, step=False, colors=None):
+    """Interactive multi-line chart (y-axis fitted to the data, zoom and tooltip).
+
+    colors: optional dict series name -> colour.
+    """
+    colour_scale = (alt.Scale(domain=list(colors), range=list(colors.values()))
+                    if colors else alt.Undefined)
     long = (table.rename_axis("Date").reset_index()
             .melt("Date", var_name="Series", value_name="Value").dropna())
     chart = (
@@ -44,7 +49,7 @@ def multi_line_chart(table, y_title, step=False):
         .encode(
             x=alt.X("Date:T", title="Date"),
             y=alt.Y("Value:Q", title=y_title, scale=alt.Scale(zero=False, nice=True)),
-            color=alt.Color("Series:N", legend=alt.Legend(title=None)),
+            color=alt.Color("Series:N", scale=colour_scale, legend=alt.Legend(title=None)),
             tooltip=["Date:T", "Series:N", alt.Tooltip("Value:Q", format=".3f")],
         )
         .interactive()
