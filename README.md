@@ -30,7 +30,7 @@ Data comes from **Yahoo Finance** (`yfinance`) and **FRED**.
 | **Volatility** | Realised, EWMA (RiskMetrics) and GARCH(1,1) volatility, with a forecast of the next trading days, long-run level and model parameters |
 | **Explorer tab** (Stocks, Commodities, Bonds) | Form to pick instruments and dates, normalise to base 100, add short/long moving averages, then get annualised return, volatility, Sharpe ratio, max drawdown, correlation heatmap and drawdown chart |
 
-Line charts are interactive (Plotly): a **Y-axis zoom** slider stretches or shrinks the vertical axis, and the mouse wheel or a box selection zooms (double-click to reset).
+Line charts are interactive (Plotly): click and drag vertically to zoom on a price band, use the **Y-axis zoom** slider to stretch or shrink the vertical axis (double-click to reset).
 
 ## Run locally
 
