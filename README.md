@@ -3,7 +3,7 @@
 [![CI](https://github.com/moraztom31/market-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/moraztom31/market-dashboard/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.12+-blue)
 
-🔗 **[Voir l'application en ligne](https://market-dashboard-nnfptzqw97h44exkpyhemg.streamlit.app/)**
+🔗 **[Voir l'application en ligne](https://market-dashboard-cli9umyzn2x5ukh99dnuln.streamlit.app/)**
 
 ![Demo](docs/demo.gif)
 
