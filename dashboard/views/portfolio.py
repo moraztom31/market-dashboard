@@ -8,10 +8,9 @@ import streamlit as st
 from dashboard import analytics
 from dashboard.charts import (correlation_heatmap, frontier_chart, multi_line_chart,
                               return_bars, show_returns_table, weights_bars)
-from dashboard.config import (ACCENT, BENCHMARK_WEIGHTS, BLUE, DEFAULT_RISK_FREE,
-                              PORTFOLIO_DEFAULT_ASSETS,
+from dashboard.config import (ACCENT, BENCHMARK_WEIGHTS, BLUE, PORTFOLIO_DEFAULT_ASSETS,
                               PORTFOLIO_UNIVERSE, STRESS_PROXIES, STRESS_SCENARIOS)
-from dashboard.data import download_close_prices
+from dashboard.data import average_risk_free, download_close_prices
 from dashboard.views.common import sidebar_controls
 
 BENCHMARK = "Benchmark 40/30/30"
@@ -129,8 +128,11 @@ def portfolio_page():
         selected = st.multiselect("Assets", list(PORTFOLIO_UNIVERSE),
                                   default=PORTFOLIO_DEFAULT_ASSETS,
                                   format_func=lambda s: PORTFOLIO_UNIVERSE[s], key="pf_assets")
-        risk_free = st.number_input("Risk-free rate (%)", 0.0, 10.0, DEFAULT_RISK_FREE * 100, step=0.25,
-                                    key="pf_risk_free") / 100
+        risk_free = st.number_input(
+            "Risk-free rate (%)", 0.0, 10.0, round(average_risk_free(start, end) * 100, 2),
+            step=0.25, key=f"pf_risk_free_{start}_{end}",
+            help="Defaults to the average U.S. 13-week T-bill yield over the selected period.",
+        ) / 100
 
     # the benchmark always needs its three ETFs, even if they are not selected
     symbols = sorted(set(selected) | set(BENCHMARK_WEIGHTS))
@@ -181,6 +183,14 @@ def portfolio_page():
 
     metrics = analytics.risk_metrics(equity, risk_free)
     metrics.insert(0, "Total return", equity.iloc[-1] / 100 - 1)
+    years = len(returns) / analytics.TRADING_DAYS
+    if years < 3:
+        st.warning(f"Only {years:.1f} years of data: Sharpe ratios on such a short window are "
+                   "very noisy and flattering (the S&P 500 averages about 0.6 over 1950-today "
+                   "with a 0% risk-free rate). Use the 5y lookback for a meaningful estimate.")
+    st.caption(f"Sharpe = (mean daily return x 252 - {risk_free:.2%} risk-free) / volatility. "
+               "**Max Sharpe and Min volatility are optimised on this same period (in-sample)**, "
+               "so their figures are optimistic; see the out-of-sample test below.")
     st.dataframe(
         metrics.style.format({"Total return": "{:+.1%}", "Annual return": "{:+.1%}",
                               "Annual volatility": "{:.1%}", "Sharpe ratio": "{:.2f}",

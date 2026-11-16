@@ -6,7 +6,7 @@ import streamlit as st
 from dashboard import analytics
 from dashboard.charts import multi_line_chart
 from dashboard.config import ACCENT, BACKTEST_SYMBOLS, BLUE
-from dashboard.data import download_close_prices
+from dashboard.data import average_risk_free, download_close_prices
 from dashboard.views.common import sidebar_controls
 
 
@@ -47,7 +47,7 @@ def backtest_page():
 
     equity, position, n_trades = analytics.backtest_crossover(
         price, int(short_window), int(long_window), cost_bps)
-    metrics = analytics.risk_metrics(equity)
+    metrics = analytics.risk_metrics(equity, average_risk_free(start, end))
 
     st.subheader("Results")
     final = equity.iloc[-1]
