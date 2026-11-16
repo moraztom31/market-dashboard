@@ -7,6 +7,7 @@ import streamlit as st
 
 from dashboard import analytics
 from dashboard.charts import correlation_heatmap, multi_line_chart
+from dashboard.config import DEFAULT_RISK_FREE
 from dashboard.data import download_close_prices
 from dashboard.validation import validate_inputs
 
@@ -159,7 +160,8 @@ def explorer(prefix, options, default, price_name, labels=None):
                               "Sharpe ratio": "{:.2f}", "Max drawdown": "{:.1%}"},
                              na_rep="n/a"),
         width="stretch")
-    st.caption("Annualised on 252 trading days; Sharpe ratio uses a 0% risk-free rate. "
+    st.caption("Annualised on 252 trading days; Sharpe ratio = (mean daily return x 252 - "
+               f"{DEFAULT_RISK_FREE:.0%} risk-free rate) / volatility. "
                "Past performance does not predict future results.")
 
     if len(close_prices.columns) >= 2:

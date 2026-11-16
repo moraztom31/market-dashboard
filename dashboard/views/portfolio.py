@@ -8,7 +8,8 @@ import streamlit as st
 from dashboard import analytics
 from dashboard.charts import (correlation_heatmap, frontier_chart, multi_line_chart,
                               return_bars, show_returns_table, weights_bars)
-from dashboard.config import (ACCENT, BENCHMARK_WEIGHTS, BLUE, PORTFOLIO_DEFAULT_ASSETS,
+from dashboard.config import (ACCENT, BENCHMARK_WEIGHTS, BLUE, DEFAULT_RISK_FREE,
+                              PORTFOLIO_DEFAULT_ASSETS,
                               PORTFOLIO_UNIVERSE, STRESS_PROXIES, STRESS_SCENARIOS)
 from dashboard.data import download_close_prices
 from dashboard.views.common import sidebar_controls
@@ -128,7 +129,7 @@ def portfolio_page():
         selected = st.multiselect("Assets", list(PORTFOLIO_UNIVERSE),
                                   default=PORTFOLIO_DEFAULT_ASSETS,
                                   format_func=lambda s: PORTFOLIO_UNIVERSE[s], key="pf_assets")
-        risk_free = st.number_input("Risk-free rate (%)", 0.0, 10.0, 0.0, step=0.25,
+        risk_free = st.number_input("Risk-free rate (%)", 0.0, 10.0, DEFAULT_RISK_FREE * 100, step=0.25,
                                     key="pf_risk_free") / 100
 
     # the benchmark always needs its three ETFs, even if they are not selected

@@ -2,6 +2,9 @@
 
 BLUE, ORANGE, ACCENT = "#4db3e6", "#d95f02", "#ff9f36"  # up / down / accent colours
 
+# Annual risk-free rate used for Sharpe ratios (about the 3-month U.S. T-bill yield)
+DEFAULT_RISK_FREE = 0.04
+
 STOCK_TICKERS = ["AAPL", "TSLA", "MSFT", "NVDA", "ORCL", "IBM"]
 
 BOND_SYMBOLS = {

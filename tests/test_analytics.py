@@ -75,3 +75,13 @@ def test_backtest_costs_reduce_performance():
     free, _, _ = analytics.backtest_crossover(price, 3, 10, cost_bps=0)
     costly, _, _ = analytics.backtest_crossover(price, 3, 10, cost_bps=50)
     assert costly["Strategy"].iloc[-1] <= free["Strategy"].iloc[-1]
+
+
+def test_sharpe_is_excess_arithmetic_return_over_volatility():
+    rng = np.random.default_rng(1)
+    prices = make_prices(100 * np.cumprod(1 + rng.normal(0.0005, 0.01, 500)))
+    returns = prices.pct_change().dropna()
+    expected = (returns.mean() * 252 - 0.04) / (returns.std() * np.sqrt(252))
+    assert analytics.sharpe_ratio(prices, 0.04).iloc[0] == pytest.approx(expected.iloc[0])
+    # default risk-free rate is not zero, so the Sharpe is lower than the raw return/risk ratio
+    assert analytics.sharpe_ratio(prices).iloc[0] < analytics.sharpe_ratio(prices, 0.0).iloc[0]
