@@ -7,7 +7,7 @@ import streamlit as st
 
 from dashboard import analytics
 from dashboard.charts import correlation_heatmap, multi_line_chart
-from dashboard.data import download_close_prices
+from dashboard.data import average_risk_free, download_close_prices
 from dashboard.validation import validate_inputs
 
 
@@ -153,13 +153,15 @@ def explorer(prefix, options, default, price_name, labels=None):
 
     # ---- risk and return indicators ----
     st.subheader("Risk and return metrics")
-    metrics = analytics.risk_metrics(close_prices).rename(index=name)
+    risk_free = average_risk_free(params["start"], params["end"])
+    metrics = analytics.risk_metrics(close_prices, risk_free).rename(index=name)
     st.dataframe(
         metrics.style.format({"Annual return": "{:+.1%}", "Annual volatility": "{:.1%}",
                               "Sharpe ratio": "{:.2f}", "Max drawdown": "{:.1%}"},
                              na_rep="n/a"),
         width="stretch")
-    st.caption("Annualised on 252 trading days; Sharpe ratio uses a 0% risk-free rate. "
+    st.caption("Annualised on 252 trading days; Sharpe ratio = (mean daily return x 252 - "
+               f"{risk_free:.2%} average T-bill yield) / volatility. "
                "Past performance does not predict future results.")
 
     if len(close_prices.columns) >= 2:

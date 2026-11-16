@@ -9,7 +9,7 @@ import requests
 import streamlit as st
 import yfinance as yf
 
-from dashboard.config import FX_CURRENCIES, FX_SYMBOLS
+from dashboard.config import DEFAULT_RISK_FREE, FX_CURRENCIES, FX_SYMBOLS
 
 
 class NoDataError(Exception):
@@ -52,6 +52,21 @@ def _download_one(symbol, start, end):
     if last_error is not None:
         raise last_error
     raise NoDataError(symbol)
+
+
+def average_risk_free(start, end):
+    """Average annual risk-free rate over [start, end]: the U.S. 13-week T-bill yield (^IRX).
+
+    Falls back to DEFAULT_RISK_FREE when the yield cannot be downloaded, so a data problem
+    never blocks the Sharpe ratios.
+    """
+    try:
+        irx = _download_one("^IRX", start, end).dropna()
+        rate = float(irx.mean()) / 100 if len(irx) else float("nan")
+        # ^IRX is quoted in percent: anything outside 0-10% is not a plausible rate
+        return rate if 0 <= rate <= 0.10 else DEFAULT_RISK_FREE
+    except Exception:
+        return DEFAULT_RISK_FREE
 
 
 def download_close_prices(tickers, start, end):

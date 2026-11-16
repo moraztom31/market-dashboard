@@ -5,7 +5,7 @@ from datetime import timedelta
 import numpy as np
 import pandas as pd
 
-from dashboard.config import TRAILING_DAYS
+from dashboard.config import DEFAULT_RISK_FREE, TRAILING_DAYS
 
 TRADING_DAYS = 252
 
@@ -63,10 +63,15 @@ def annualized_volatility(prices):
     return daily_returns(prices).std() * np.sqrt(TRADING_DAYS)
 
 
-def sharpe_ratio(prices, risk_free=0.0):
-    """(Annual return - risk-free rate) / annual volatility."""
+def sharpe_ratio(prices, risk_free=DEFAULT_RISK_FREE):
+    """Annualised Sharpe ratio from daily returns.
+
+    (mean daily return x 252 - risk-free rate) / (daily std x sqrt(252)): the arithmetic
+    excess return over the risk-free rate, the same formula as the portfolio optimiser.
+    """
+    mean = daily_returns(prices).mean() * TRADING_DAYS
     volatility = annualized_volatility(prices).replace(0, np.nan)
-    return (annualized_return(prices) - risk_free) / volatility
+    return (mean - risk_free) / volatility
 
 
 def drawdown_series(prices):
@@ -79,7 +84,7 @@ def max_drawdown(prices):
     return drawdown_series(prices).min()
 
 
-def risk_metrics(prices, risk_free=0.0):
+def risk_metrics(prices, risk_free=DEFAULT_RISK_FREE):
     """Table of annual return, volatility, Sharpe ratio and max drawdown per asset."""
     return pd.DataFrame({
         "Annual return": annualized_return(prices),
@@ -124,7 +129,7 @@ def portfolio_equity(returns, weights):
     return (1 + portfolio_returns).cumprod() * 100
 
 
-def portfolio_stats(returns, weights, risk_free=0.0):
+def portfolio_stats(returns, weights, risk_free=DEFAULT_RISK_FREE):
     """Expected annual return, volatility and Sharpe ratio from historical mean/covariance."""
     weights = weights.reindex(returns.columns).fillna(0.0).to_numpy()
     mean = returns.mean().to_numpy() * TRADING_DAYS
@@ -135,7 +140,7 @@ def portfolio_stats(returns, weights, risk_free=0.0):
     return {"Return": expected, "Volatility": volatility, "Sharpe ratio": sharpe}
 
 
-def simulate_portfolios(returns, n_samples=20_000, risk_free=0.0, seed=0):
+def simulate_portfolios(returns, n_samples=20_000, risk_free=DEFAULT_RISK_FREE, seed=0):
     """Random long-only portfolios (weights >= 0, sum = 1) plus each single asset."""
     n_assets = returns.shape[1]
     rng = np.random.default_rng(seed)
@@ -170,7 +175,7 @@ def inverse_volatility_weights(returns):
 
 
 # ---- out-of-sample (walk-forward) evaluation ------------------------------------
-def choose_weights(returns, kind, risk_free=0.0, n_samples=3000, seed=0):
+def choose_weights(returns, kind, risk_free=DEFAULT_RISK_FREE, n_samples=3000, seed=0):
     """Weights chosen on `returns`: max_sharpe, min_volatility, inverse_volatility, equal_weight."""
     assets = list(returns.columns)
     if kind == "equal_weight":
@@ -181,7 +186,7 @@ def choose_weights(returns, kind, risk_free=0.0, n_samples=3000, seed=0):
     return pick_portfolio(simulation, kind, assets)
 
 
-def walk_forward_returns(returns, kind, window=504, step=21, risk_free=0.0, cost_bps=0.0,
+def walk_forward_returns(returns, kind, window=504, step=21, risk_free=DEFAULT_RISK_FREE, cost_bps=0.0,
                          n_samples=3000):
     """Out-of-sample daily returns of a strategy.
 

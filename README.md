@@ -45,6 +45,10 @@ Every line chart has a **vertical scale** control (plus mouse-wheel zoom and dra
 - **No look-ahead**: the strategy backtest lags its signal by one day; the portfolio
   walk-forward test re-estimates weights every few weeks using *only* the previous
   years, then applies them to the following weeks, with transaction costs on turnover.
+- **Sharpe ratio**: arithmetic excess return over the average T-bill yield of the period,
+  the same formula in the tables and in the optimiser. Short windows (under 3 years) are
+  flagged as unreliable: for reference the S&P 500 averages about 0.6 since 1950 with a 0%
+  risk-free rate, and a diversified portfolio rarely sustains a Sharpe above 1 for long.
 - **In-sample vs out-of-sample**: portfolios optimised on the whole period (Max Sharpe,
   Min volatility) look better than they would in practice; the app shows both so the
   gap is visible.
@@ -58,18 +62,19 @@ Every line chart has a **vertical scale** control (plus mouse-wheel zoom and dra
 
 ## Key findings
 
-Results observed in the live app on 14 October 2026 (5-year lookback; they change as the
-market data does).
+Results observed in the live app on 16 November 2026 (5-year lookback; they change as the
+market data does). Sharpe ratios are `(mean daily return x 252 - risk-free) / annual volatility`,
+with the risk-free rate set to the average U.S. 13-week T-bill yield over the period (3.9%).
 
 **Out-of-sample portfolio test** (2-year estimation window, monthly rebalancing, 5 bps cost):
 
 | Portfolio | Total return | Sharpe | Max drawdown |
 |---|---|---|---|
-| Benchmark 40/30/30 | +37.3% | 1.38 | -10.0% |
-| Equal weight | +33.9% | 1.30 | -9.3% |
-| Max Sharpe (optimised) | +33.4% | 0.72 | -16.9% |
-| Inverse volatility | +21.7% | 1.07 | -7.8% |
-| Min volatility | +9.5% | 0.59 | -6.5% |
+| Benchmark 40/30/30 | +29.7% | 0.63 | -10.0% |
+| Equal weight | +26.6% | 0.55 | -9.3% |
+| Max Sharpe (optimised) | +28.1% | 0.37 | -16.9% |
+| Inverse volatility | +17.0% | 0.25 | -7.7% |
+| Min volatility | +6.1% | -0.33 | -6.4% |
 
 - The simple 40/30/30 allocation beats every optimised portfolio on a risk-adjusted basis:
   re-optimising on past data did not add value out-of-sample, and Max Sharpe suffered the
